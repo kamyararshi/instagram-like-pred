@@ -13,7 +13,7 @@
 
 # Dataset Specifications
 
-### URL: https://github.com/ralbertazzi/instagramlikeprediction/tree/master
+### Github Repo URL: https://github.com/ralbertazzi/instagramlikeprediction/tree/master
 
 This repository contains two type of features in predicting likes:
 
@@ -25,10 +25,16 @@ This repository contains two type of features in predicting likes:
 - A json file containing the objects detected in each image of the post. It capitalizes the google vision mode to extract the probabilities of objects in a specific image. (Extractor file exists!)
 
 
-### URL: https://github.com/ksb2043/instagram_influencer_dataset
+### Dataset URL: https://github.com/ksb2043/instagram_influencer_dataset
 
 - Access has been requested from authors.
 
-### LINK: [Kaggle](https://www.kaggle.com/datasets/syedjaferk/top-200-instagrammers-data-cleaned)
+### Dataset LINK: [Kaggle](https://www.kaggle.com/datasets/syedjaferk/top-200-instagrammers-data-cleaned)
 
 This dataset contains general data (e.g. Avg Views, Engagements, Comments, Topic, etc.) from top 200 influencers in instagram. (CURRENTLY NOTE APPLICABLE)
+
+### Dataset used by TDS implementation [Link](https://github.com/gvsi/instagram-like-predictor/tree/master/profiles)
+The dataset includes json files of each instagram user, in which there are various information such as user bio, number of posts, and all of the posts data. Image of each post is available via a given url.
+
+### Summary 
+Overall, so far we have found a couple of repositories with their datasets. We can exploit the image url inside the datasets and use GoogelVision to find the labels in each image. We can use the labels alongside the post data, such as description and ..., to formulate our problem and predict the number of likes per post.
