@@ -36,5 +36,8 @@ This dataset contains general data (e.g. Avg Views, Engagements, Comments, Topic
 ### Dataset used by TDS implementation [Link](https://github.com/gvsi/instagram-like-predictor/tree/master/profiles)
 The dataset includes json files of each instagram user, in which there are various information such as user bio, number of posts, and all of the posts data. Image of each post is available via a given url.
 
+### Papers
+S. De, A. Maity, V. Goel, S. Shitole and A. Bhattacharya, "Predicting the popularity of instagram posts for a lifestyle magazine using deep learning," 2017 2nd International Conference on Communication Systems, Computing and IT Applications (CSCITA), Mumbai, 2017, pp. 174-177, doi: 10.1109/CSCITA.2017.8066548.
+
 ### Summary 
 Overall, so far we have found a couple of repositories with their datasets. We can exploit the image url inside the datasets and use GoogelVision to find the labels in each image. We can use the labels alongside the post data, such as description and ..., to formulate our problem and predict the number of likes per post.
