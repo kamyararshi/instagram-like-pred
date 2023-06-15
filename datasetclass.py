@@ -10,7 +10,7 @@ class InstagramUserData(Dataset):
         super().__init__()
         self.dataframe_orig = pd.read_csv(data_path).drop('Unnamed: 0', axis=1)
         self.device = device
-        self.labels = self.dataframe_orig['numberLikesCategory']
+        self.labels = self.dataframe_orig['numberLikesCategory']-1 # Make labels to be from 0-9
         self.data = self.dataframe_orig.drop(['numberLikesCategory'], axis=1)
         data_train, data_test, labels_train, labels_test = train_test_split(
             self.data, self.labels, test_size=.1, random_state=42
@@ -24,7 +24,7 @@ class InstagramUserData(Dataset):
             self.labels = labels_test
 
     def __getitem__(self, index) -> torch.Tensor:
-        return torch.tensor(self.dataframe.iloc[index], dtype=torch.float32, device=self.device).reshape(1, -1)\
-        , torch.tensor(self.labels.iloc[index], dtype=torch.float32, device=self.device).reshape(1, -1)
+        return torch.tensor(self.dataframe.iloc[index], dtype=torch.float32, device=self.device).reshape(-1, 1)\
+        , torch.tensor(self.labels.iloc[index], dtype=torch.float32, device=self.device)
     def __len__(self):
         return len(self.dataframe)

@@ -20,16 +20,19 @@ class LikeCategoryPredictor(nn.Module):
         )
          
 
-        self.predictor = nn.Sequential(
+        self.linear = nn.Sequential(
             nn.Flatten(),
             nn.Linear(32, 10),
-            nn.Softmax(10)
+            #nn.Softmax(10)
         )
+        self.softmax = nn.Softmax(dim=1)
 
 
     def forward(self, x):
         x = self.feature(x)
-        out=self.predictor(x)
+        out = self.linear(x)
+        #out = self.softmax(out)
+
         return out
     
 # TODO: Later we do regression on the like amount
