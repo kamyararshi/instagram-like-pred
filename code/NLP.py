@@ -66,3 +66,49 @@ test.posts_df_filter_weekday['language'] = test.posts_df_filter_weekday['descrip
 
 
 print(test.posts_df_filter_weekday['language'].value_counts())
+
+
+
+# word2vec
+
+# def load_embeddings(file="wiki-news-300d-1M.vec"):
+#     embeddings = {}
+#     with open(file, 'r', encoding='utf-8') as f:
+#         for i, line in enumerate(f):
+#             if i >= 40000:
+#                 break
+#             tokens = line.rstrip().split(' ')
+#             embeddings[tokens[0]] = np.asarray(tokens[1:], dtype='float64')
+# 
+#     return embeddings
+# 
+# 
+# def tokenize(sentence):
+#     tokens = nltk.word_tokenize(sentence)
+#     return tokens
+# 
+# 
+# def embed_sentence(sentence, word2emb):
+#     tokens = tokenize(sentence)
+#     token_embeddings = []
+#     for token in tokens:
+#         if token in word2emb:
+#             token_embeddings.append(word2emb[token])
+#         else:
+#             token_embeddings.append(np.zeros(300))
+#     if len(token_embeddings) > 0:
+#         sentence_embedding = np.mean(token_embeddings, axis=0)
+#     else:
+#         sentence_embedding = np.zeros(300)
+#     return sentence_embedding
+# 
+# 
+# embeddings = load_embeddings()
+# test.posts_df_filter_weekday['descriptionVector'] = None
+# test.posts_df_filter_weekday['descriptionVector'] = \
+#     [embed_sentence(sentence, embeddings) for sentence in test.posts_df_filter_weekday['descriptionProcessed']]
+# #
+# print(test.posts_df_filter_weekday[:1])
+# 
+# description_vector = test.posts_df_filter_weekday.iloc[1]['descriptionVector']
+# print(description_vector)
