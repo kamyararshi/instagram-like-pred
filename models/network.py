@@ -2,23 +2,42 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class FeatureExtractor(nn.Module):
+class LikeCategoryPredictor(nn.Module):
     def __init__(self, in_dim):
-        self.conv1 = nn.Conv2d()
+        super().__init__()
+
+        self.feature = nn.Sequential(
+            nn.Conv1d(in_channels=in_dim, out_channels=256, kernel_size=1),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+            nn.Conv1d(in_channels=256, out_channels=128, kernel_size=1),
+            nn.BatchNorm1d(128),
+            nn.ReLU(),
+            nn.Conv1d(in_channels=128, out_channels=64, kernel_size=1),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+            nn.Conv1d(in_channels=64, out_channels=32, kernel_size=1),
+        )
+         
+
+        self.predictor = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(32, 10),
+            nn.Softmax(10)
+        )
+
 
     def forward(self, x):
-        out=x
+        x = self.feature(x)
+        out=self.predictor(x)
         return out
     
-
+# TODO: Later we do regression on the like amount
 class Predictor(nn.Module):
     def __init__(self, in_dim):
-        self.ftrs_extrct = FeatureExtractor(in_dim)
-        self.fc1 = nn.fc()
-        self.softmax = nn.softmax()
+        super().__init__()
+        None
 
     def forwrd(self, x):
-        x = self.ftrs_extrct(x)
-        x = self.fc(x)
-        out = self.softmax(x)
+        out = x
         return out
