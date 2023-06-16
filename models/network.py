@@ -17,6 +17,8 @@ class LikeCategoryPredictor(nn.Module):
             nn.BatchNorm1d(64),
             nn.ReLU(),
             nn.Conv1d(in_channels=64, out_channels=32, kernel_size=1),
+            nn.BatchNorm1d(32),
+            nn.ReLU(),
         )
          
 

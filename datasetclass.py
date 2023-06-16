@@ -25,6 +25,6 @@ class InstagramUserData(Dataset):
 
     def __getitem__(self, index) -> torch.Tensor:
         return torch.tensor(self.dataframe.iloc[index], dtype=torch.float32, device=self.device).reshape(-1, 1)\
-        , torch.tensor(self.labels.iloc[index], dtype=torch.float32, device=self.device)
+        , torch.tensor(self.labels.iloc[index], dtype=torch.float32, device=self.device).to(torch.long)
     def __len__(self):
         return len(self.dataframe)
