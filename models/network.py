@@ -17,12 +17,17 @@ class LikeCategoryPredictor(nn.Module):
             nn.BatchNorm1d(64),
             nn.ReLU(),
             nn.Conv1d(in_channels=64, out_channels=32, kernel_size=1),
+            nn.BatchNorm1d(32),
+            nn.ReLU(),
+            nn.Conv1d(in_channels=32, out_channels=16, kernel_size=1),
+            nn.BatchNorm1d(16),
+            nn.ReLU(),
         )
          
 
         self.linear = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(32, 10),
+            nn.Linear(16, 10),
             #nn.Softmax(10)
         )
         self.softmax = nn.Softmax(dim=1)
