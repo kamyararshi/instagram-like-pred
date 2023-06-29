@@ -107,7 +107,7 @@ def save_model(model, optimizer,  epoch, log_dir, loss):
     log_path = os.path.join(log_dir, 'model.pth.tar')
 
     # Save loss vals
-    with open(os.path.join(log_dir, 'output.txt'), 'w') as file:
+    with open(os.path.join(log_dir, 'losses.txt'), 'w') as file:
         # Iterate over the list
         for element in avg_losses:
             # Write each element to the file
