@@ -102,7 +102,7 @@ def calculate_accuracy(predicted_labels, true_labels):
 
 
 def save_model(model, optimizer,  epoch, log_dir, loss):
-    """
+    """Saves the weights and loss logs
     """
     log_path = os.path.join(log_dir, 'model.pth.tar')
 
