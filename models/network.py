@@ -24,7 +24,7 @@ class LikeCategoryPredictor(nn.Module):
 
         self.linear = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(32, 10),
+            nn.Linear(16, 10),
             #nn.Softmax(10)
         )
         self.softmax = nn.Softmax(dim=1)

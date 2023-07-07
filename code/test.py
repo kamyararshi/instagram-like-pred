@@ -2,6 +2,9 @@
 # 开发时间：2023/6/8 18:09
 from DataFrame import Profile, Post
 import pandas as pd
+
+import argparse
+import os
 pd.set_option('display.width', 180)
 
 
@@ -65,28 +68,36 @@ def delete_Video_and_multipleImage(profiles, posts):
     return profiles_filtering, posts_filtered
 
 
-folder_path = "profiles"
-profiles_df = Profile.load_profiles_from_folder(folder_path)
-posts_df = Post.load_posts_from_folder(folder_path)
-# Add the average_likes column to profiles_df
-profiles_df_ave = add_average(profiles_df, posts_df)
-# filtering, such that numberFollowers < 1.000.000 & average_likes  < 200.000
-profiles_df_filter, posts_df_filter = filtering(profiles_df_ave, posts_df, number=1000000, average=200000)
-# print(profiles_df_filter.shape)
-# print(posts_df.shape, posts_df_filter.shape)
-# delete posts with videos and multiple images
-profiles_df_filter, posts_df_filter = delete_Video_and_multipleImage(profiles_df_filter, posts_df_filter)
-# print(posts_df_filter.shape)
-#
-# max_num = posts_df_filter['numberLikes'].max()
-# print(max_num)
+if __name__ == '__main__':
 
-# profiles_df['website_category'] = profiles_df['website'].apply(categorize_website)
-# print(profiles_df['website_category'].value_counts())
+    ap = argparse.ArgumentParser()
 
-# Storing day of the week and delete the column of date
-posts_df_filter_weekday = change_date2weekday(posts_df_filter)
-# Categorizing into 10 equally sized groups based on numberLikes
-posts_df_filter_weekday_ = number2category(posts_df_filter_weekday)
-# print(posts_df_filter_weekday[:5])
-# print(posts_df_filter_weekday.shape)
+    ap.add_argument('-p', "--path", default='profiles', help='paht of the json profiles data')
+
+    args = ap.parse_args()
+    
+    folder_path = args.path
+    profiles_df = Profile.load_profiles_from_folder(folder_path)
+    posts_df = Post.load_posts_from_folder(folder_path)
+    # Add the average_likes column to profiles_df
+    profiles_df_ave = add_average(profiles_df, posts_df)
+    # filtering, such that numberFollowers < 1.000.000 & average_likes  < 200.000
+    profiles_df_filter, posts_df_filter = filtering(profiles_df_ave, posts_df, number=1000000, average=200000)
+    # print(profiles_df_filter.shape)
+    # print(posts_df.shape, posts_df_filter.shape)
+    # delete posts with videos and multiple images
+    profiles_df_filter, posts_df_filter = delete_Video_and_multipleImage(profiles_df_filter, posts_df_filter)
+    # print(posts_df_filter.shape)
+    #
+    # max_num = posts_df_filter['numberLikes'].max()
+    # print(max_num)
+
+    # profiles_df['website_category'] = profiles_df['website'].apply(categorize_website)
+    # print(profiles_df['website_category'].value_counts())
+
+    # Storing day of the week and delete the column of date
+    posts_df_filter_weekday = change_date2weekday(posts_df_filter)
+    # Categorizing into 10 equally sized groups based on numberLikes
+    posts_df_filter_weekday_ = number2category(posts_df_filter_weekday)
+    # print(posts_df_filter_weekday[:5])
+    # print(posts_df_filter_weekday.shape)
