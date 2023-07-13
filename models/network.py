@@ -86,6 +86,10 @@ class ImageEmbedder(nn.Module):
         else:
             self.model = torchvision.models.resnet18()
 
+        # Freeze weights
+        for parameter in self.model.parameters():
+            parameter.requires_grad = False
+
         # Remove the last fc layer
         self.model.fc = nn.Identity()
 
