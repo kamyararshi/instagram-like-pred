@@ -50,7 +50,7 @@ def train_one_epoch(train_loader, optimizer, criterion, model, device):
 
         # Gather data and report
         running_loss += loss.item()
-        if i % 100 != 0:
+        if i % 100 == 0:
             avg_loss = running_loss / 1000 # loss per batch
             print('  batch {} loss: {}'.format(i + 1, avg_loss))
             #tb_x = epoch_index * len(train_loader) + i + 1
@@ -133,7 +133,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', default="LikesCategory")
     parser.add_argument('--num_epochs', default=100)
     parser.add_argument("--eval", dest="eval", action="store_true", help="Do eval on test set")
-    parser.add_argument('--device', default='cpu')
+    parser.add_argument('--device', default='cuda:0')
     parser.add_argument("--verbose", dest="verbose", action="store_true", help="Print model architecture")
     parser.set_defaults(eval=True)
     parser.set_defaults(verbose=False)
@@ -180,6 +180,7 @@ if __name__ == '__main__':
     with torch.no_grad():
         some_data = some_data.to(device)
         some_image = some_image.to(device)
+        some_label = some_label.to(device)
         _ = model((some_data, some_image))
     print("Testing Done!")
 
@@ -190,8 +191,13 @@ if __name__ == '__main__':
 
     # Training Loop
     print("Training Starts ...")
-    avg_losses, epoch = train(args.num_epochs, train_loader, optimizer, criterion, model, test_loader=test_loader, device='cuda')
+    avg_losses, epoch = train(args.num_epochs, train_loader, optimizer, criterion, model, test_loader=test_loader, device=device)
 
+    print("Accuracy on some data:")
+    model.eval()
+    some_output = model((some_data, some_image))
+
+    print(calculate_accuracy(torch.argmax(some_output, dim=1), some_label)*100, '%')
     # Save model
     print("Saving the model at: ", log_dir)
     save_model(model, optimizer,  epoch, log_dir, avg_losses)
