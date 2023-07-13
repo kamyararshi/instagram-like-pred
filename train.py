@@ -50,7 +50,7 @@ def train_one_epoch(train_loader, optimizer, criterion, model, device):
 
         # Gather data and report
         running_loss += loss.item()
-        if i % 1000 == 999:
+        if i % 100 != 0:
             avg_loss = running_loss / 1000 # loss per batch
             print('  batch {} loss: {}'.format(i + 1, avg_loss))
             #tb_x = epoch_index * len(train_loader) + i + 1
@@ -186,7 +186,7 @@ if __name__ == '__main__':
 
     # Define loss and optimizer
     criterion = CrossEntropyLoss()
-    optimizer = Adam(model.parameters(), lr=.0005)
+    optimizer = Adam(model.parameters(), lr=.001)
 
     # Training Loop
     print("Training Starts ...")
