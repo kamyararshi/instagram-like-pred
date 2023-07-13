@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import torchvision
 
 class LikeCategoryPredictor(nn.Module):
-    def __init__(self, in_dim, image_in_dim, out_classes, convolutional=False, resnet_weights=torchvision.models.ResNet18_Weights):
+    def __init__(self, in_dim, image_in_dim, out_classes, convolutional=False, resnet_weights=torchvision.models.ResNet18_Weights.DEFAULT):
         super().__init__()
 
         if convolutional:

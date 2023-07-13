@@ -10,9 +10,9 @@ import pandas as pd
 import os
 
 class InstagramUserData(Dataset):
-    def __init__(self, data_path, sep=';', device='cpu', train=True) -> None:
+    def __init__(self, data_path, seperator=';', device='cpu', train=True) -> None:
         super().__init__()
-        self.dataframe_orig = pd.read_csv(data_path, sep=sep).drop('Unnamed: 0', axis=1)
+        self.dataframe_orig = pd.read_csv(data_path, sep=seperator).drop('Unnamed: 0', axis=1)
         self.device = device
         self.image_paths = self.dataframe_orig['path']
         self.labels = self.dataframe_orig['numberLikesCategory']-1 # Make labels to be from 0-9
