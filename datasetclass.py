@@ -1,17 +1,23 @@
 import torch
 from torch.utils.data import DataLoader, Dataset
+from torchvision.io import read_image
 from sklearn.model_selection import train_test_split
+
+from utils import *
 
 import numpy as np
 import pandas as pd
+import os
 
 class InstagramUserData(Dataset):
-    def __init__(self, data_path, device='cpu', train=True) -> None:
+    def __init__(self, data_path, sep=';', device='cpu', train=True) -> None:
         super().__init__()
-        self.dataframe_orig = pd.read_csv(data_path).drop('Unnamed: 0', axis=1)
+        self.dataframe_orig = pd.read_csv(data_path, sep=sep).drop('Unnamed: 0', axis=1)
         self.device = device
+        self.image_paths = self.dataframe_orig['path']
         self.labels = self.dataframe_orig['numberLikesCategory']-1 # Make labels to be from 0-9
-        self.data = self.dataframe_orig.drop(['numberLikesCategory'], axis=1)
+        self.data = self.dataframe_orig.drop(['numberLikesCategory', 'descriptionProcessed', 'path'], axis=1) # We may use the descriptin to extract embeddigs latter
+        # Split train-test
         data_train, data_test, labels_train, labels_test = train_test_split(
             self.data, self.labels, test_size=.1, random_state=42
         )
@@ -24,7 +30,23 @@ class InstagramUserData(Dataset):
             self.labels = labels_test
 
     def __getitem__(self, index) -> torch.Tensor:
-        return torch.tensor(self.dataframe.iloc[index], dtype=torch.float32, device=self.device).reshape(-1, 1)\
-        , torch.tensor(self.labels.iloc[index], dtype=torch.float32, device=self.device).to(torch.long)
+        # example = {}
+        data = self.dataframe.iloc[index]
+        labels = self.labels.iloc[index]
+        path = self.image_paths[index]
+
+        # Create dict
+        data = torch.tensor(data, dtype=torch.float32, device=self.device).reshape(-1, 1).to(self.device).to(torch.float32)
+        try:
+            image = read_image(path=path).to(self.device).to(torch.float32) #TODO: Need a collate function to have all images with the same size
+        except Exception as e:
+            print(e, "in", path)
+            image = torch.tensor(999)
+        label = torch.tensor(labels, dtype=torch.long, device=self.device)
+        return data, image, label
+    
     def __len__(self):
         return len(self.dataframe)
+    
+    def _return_loader(self, batch_size, shuffle, num_workers, collate_fn):
+        return DataLoader(dataset=self, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers, collate_fn=collate_fn)
