@@ -19,6 +19,9 @@ import datasetclass
 from models import network
 from utils import *
 
+import colorama
+from colorama import Fore, Back, Style
+colorama.init(autoreset=True)
 
 def train_one_epoch(train_loader, optimizer, criterion, model, device):
     """
@@ -50,9 +53,9 @@ def train_one_epoch(train_loader, optimizer, criterion, model, device):
 
         # Gather data and report
         running_loss += loss.item()
-        if i % 100 == 0:
+        if i%100 == 0:
             avg_loss = running_loss / 1000 # loss per batch
-            print('  batch {} loss: {}'.format(i + 1, avg_loss))
+            print(Fore.YELLOW +'\n- Batch {} Loss: {}'.format(i + 1, avg_loss))
             #tb_x = epoch_index * len(train_loader) + i + 1
             #tb_writer.add_scalar('Loss/train', last_loss, tb_x)
             running_loss = 0.
@@ -66,11 +69,12 @@ def train(num_epochs, train_loader, optimizer, criterion, model, epoch_number = 
     """
 
 
-    if device=='cuda':
-        device = ('cpu' if not torch.cuda.is_available() else 'cuda')
+    if device=='cuda:0':
+        device = ('cpu' if not torch.cuda.is_available() else 'cuda:0')
 
     avg_loss = []
     for epoch in trange(num_epochs, desc="epoch"):
+        print('\n')
         model.train(True)
         avg_loss.append(train_one_epoch(train_loader, optimizer, criterion, model, device))
 
@@ -89,9 +93,9 @@ def train(num_epochs, train_loader, optimizer, criterion, model, epoch_number = 
                 voutputs = model(vinputs)
                 vloss = criterion(voutputs, vlabels.to(torch.long))
                 running_vloss += vloss
-            print(f"Validation loss at epoch {epoch_number+1} is {vloss}")
+            print(Fore.GREEN + f"Validation Loss at Epoch {epoch_number+1} = {vloss}\n")
 
-    epoch_number += 1
+        epoch_number += 1
 
     return avg_loss, epoch
 
@@ -114,7 +118,7 @@ def save_model(model, optimizer,  epoch, log_dir, loss):
         # Iterate over the list
         for element in avg_losses:
             # Write each element to the file
-            file.write(element + '\n')
+            file.write(str(element) + '\n')
     
     # Save model
     torch.save({
@@ -175,14 +179,14 @@ if __name__ == '__main__':
     # Init Model
     model = network.LikeCategoryPredictor(in_dim=in_dim, image_in_dim=image_in_dim, out_classes=10).to(device=device)
 
-    print("Testing the model")
+    print("Testing the Model -----------------------------------------------------------------------------------")
     # First Check if everything is compatible then:
     with torch.no_grad():
         some_data = some_data.to(device)
         some_image = some_image.to(device)
         some_label = some_label.to(device)
         _ = model((some_data, some_image))
-    print("Testing Done!")
+    print("Tests Finished --------------------------------------------------------------------------------------")
 
 
     # Define loss and optimizer
@@ -190,16 +194,17 @@ if __name__ == '__main__':
     optimizer = Adam(model.parameters(), lr=.001)
 
     # Training Loop
-    print("Training Starts ...")
+    print("Training the Model --------------------------------------------------------------------------------------")
     avg_losses, epoch = train(args.num_epochs, train_loader, optimizer, criterion, model, test_loader=test_loader, device=device)
+    print("Training Finished ---------------------------------------------------------------------------------------")
 
-    print("Accuracy on some data:")
+    print("Accuracy on Some Data:")
     model.eval()
     some_output = model((some_data, some_image))
 
     print(calculate_accuracy(torch.argmax(some_output, dim=1), some_label)*100, '%')
     # Save model
-    print("Saving the model at: ", log_dir)
+    print("Saving the Model at: ", log_dir)
     save_model(model, optimizer,  epoch, log_dir, avg_losses)
 
     
