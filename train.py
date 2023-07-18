@@ -73,29 +73,30 @@ def train(num_epochs, train_loader, optimizer, criterion, model, epoch_number = 
         device = ('cpu' if not torch.cuda.is_available() else 'cuda:0')
 
     avg_loss = []
+    model.train(True)
     for epoch in trange(num_epochs, desc="epoch"):
-        print('\n')
-        model.train(True)
         avg_loss.append(train_one_epoch(train_loader, optimizer, criterion, model, device))
-
-        if test_loader is not None:
-            running_vloss = 0.0
-            # Set the model to evaluation mode, disabling dropout and using population
-            # statistics for batch normalization.
-            model.eval()
-
-        # Disable gradient computation and reduce memory consumption.
-        with torch.no_grad():
-            for i, vdata in enumerate(test_loader):
-                data, img, vlabels = vdata
-                vinputs = (data.to(device), img.to(device))
-                vlabels = vlabels.to(device)
-                voutputs = model(vinputs)
-                vloss = criterion(voutputs, vlabels.to(torch.long))
-                running_vloss += vloss
-            print(Fore.GREEN + f"Validation Loss at Epoch {epoch_number+1} = {vloss}\n")
-
         epoch_number += 1
+        
+    # Do eval on test set after training is done
+    if test_loader is not None:
+        running_vloss = 0.0
+        # Set the model to evaluation mode, disabling dropout and using population
+        # statistics for batch normalization.
+        model.eval()
+
+    # Disable gradient computation and reduce memory consumption.
+    with torch.no_grad():
+        for i, vdata in enumerate(test_loader):
+            data, img, vlabels = vdata
+            vinputs = (data.to(device), img.to(device))
+            vlabels = vlabels.to(device)
+            voutputs = model(vinputs)
+            vloss = criterion(voutputs, vlabels.to(torch.long))
+            running_vloss += vloss
+        print(Fore.GREEN + f"Average Validation Loss after training = {vloss/i}\n")
+
+        
 
     return avg_loss, epoch
 
