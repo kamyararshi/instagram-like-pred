@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, MSELoss
 from torch.utils.data import DataLoader
 from torch.optim import Adam
-
+from torch.utils.tensorboard import SummaryWriter
 
 from argparse import ArgumentParser
 from tqdm import tqdm, trange
@@ -21,6 +21,8 @@ from utils import *
 
 import colorama
 from colorama import Fore, Back, Style
+
+tb_writer = SummaryWriter('runs/LikesRegression')
 colorama.init(autoreset=True)
 
 def train_one_epoch(train_loader, optimizer, criterion, model, device):
@@ -45,7 +47,9 @@ def train_one_epoch(train_loader, optimizer, criterion, model, device):
         outputs = model((data, img))
 
         # Compute the loss and its gradients
-        loss = criterion(outputs, y.to(torch.long))
+        y = y.view(-1, 1)
+
+        loss = criterion(outputs, y.to(torch.float32))
         loss.backward()
 
         # Adjust learning weights
@@ -53,50 +57,47 @@ def train_one_epoch(train_loader, optimizer, criterion, model, device):
 
         # Gather data and report
         running_loss += loss.item()
-        if i%100 == 0:
-            avg_loss = running_loss / 1000 # loss per batch
-            print(Fore.YELLOW +'\n- Batch {} Loss: {}'.format(i + 1, avg_loss))
-            #tb_x = epoch_index * len(train_loader) + i + 1
-            #tb_writer.add_scalar('Loss/train', last_loss, tb_x)
-            running_loss = 0.
+        batch_size = i
 
-    # retutn avg loss
-    return running_loss/i
+    # Average of all Loss in Running Losses
+    avg_loss = running_loss/batch_size
 
-def train(num_epochs, train_loader, optimizer, criterion, model, epoch_number = 0, test_loader=None, device='cuda'):
+    # Return Average Loss in Whole Batch
+    return avg_loss
+
+def train(num_epochs, train_loader, optimizer, criterion, model, test_loader=None, device='cuda'):
     """
     
     """
-
-
     if device=='cuda:0':
         device = ('cpu' if not torch.cuda.is_available() else 'cuda:0')
 
     avg_loss = []
     model.train(True)
     for epoch in trange(num_epochs, desc="epoch"):
-        avg_loss.append(train_one_epoch(train_loader, optimizer, criterion, model, device))
-        epoch_number += 1
+        ep_loss = train_one_epoch(train_loader, optimizer, criterion, model, device)
+        avg_loss.append(ep_loss)
+        tb_writer.add_scalar('Loss/train', ep_loss, int(epoch))
         
-    # Do eval on test set after training is done
-    if test_loader is not None:
-        running_vloss = 0.0
-        # Set the model to evaluation mode, disabling dropout and using population
-        # statistics for batch normalization.
-        model.eval()
+        # Do eval on test set after training is done
+        if test_loader is not None:
+            running_vloss = 0.0
+            # Set the model to evaluation mode, disabling dropout and using population
+            # statistics for batch normalization.
+            model.eval()
 
-    # Disable gradient computation and reduce memory consumption.
-    with torch.no_grad():
-        for i, vdata in enumerate(test_loader):
-            data, img, vlabels = vdata
-            vinputs = (data.to(device), img.to(device))
-            vlabels = vlabels.to(device)
-            voutputs = model(vinputs)
-            vloss = criterion(voutputs, vlabels.to(torch.long))
-            running_vloss += vloss
-        print(Fore.GREEN + f"Average Validation Loss after training = {vloss/i}\n")
-
-        
+        # Disable gradient computation and reduce memory consumption.
+        with torch.no_grad():
+            for i, vdata in enumerate(test_loader):
+                data, img, vlabels = vdata
+                vinputs = (data.to(device), img.to(device))
+                vlabels = vlabels.to(device)
+                vlabels = vlabels.view(-1,1)
+                voutputs = model(vinputs)
+                vloss = criterion(voutputs, vlabels.to(torch.float32))
+                running_vloss += vloss
+            print(Fore.GREEN + f"Average Validation Loss After Training = {vloss/i}\n")
+            tb_writer.add_scalar('Loss/validation', vloss, int(epoch))
 
     return avg_loss, epoch
 
@@ -107,6 +108,22 @@ def calculate_accuracy(predicted_labels, true_labels):
     accuracy = correct_predictions / total_samples
     return accuracy
 
+def calculate_mse(predicted_labels, true_labels):
+    return ((predicted_labels - true_labels) ** 2).mean().item()
+
+def calculate_rmse(predicted_labels, true_labels):
+    return ((predicted_labels - true_labels) ** 2).mean().sqrt().item()
+
+def calculate_r2(predicted_labels, true_labels):
+    true_labels = true_labels.float()
+    predicted_labels = predicted_labels.float()
+    ss_res = ((predicted_labels - true_labels) ** 2).sum()
+    ss_tot = ((true_labels - true_labels.mean()) ** 2).sum()
+    r2_score = 1 - ss_res/ss_tot
+    return r2_score.item()
+
+def calculate_mae(predicted_labels, true_labels):
+    return torch.abs(predicted_labels - true_labels).mean().item()
 
 
 def save_model(model, optimizer,  epoch, log_dir, loss):
@@ -133,10 +150,10 @@ def save_model(model, optimizer,  epoch, log_dir, loss):
 if __name__ == '__main__':
     parser = ArgumentParser()
 
-    parser.add_argument('--path', default="preprocessing/final_data_pictures_ready.csv")
+    parser.add_argument('--path', default="preprocessing/final_data_pictures_numberLikes.csv")
     parser.add_argument('--log', default="log")
-    parser.add_argument('--name', default="LikesCategory")
-    parser.add_argument('--num_epochs', default=100)
+    parser.add_argument('--name', default="LikesRegressionCategory")
+    parser.add_argument('--num_epochs', default=2)
     parser.add_argument("--eval", dest="eval", action="store_true", help="Do eval on test set")
     parser.add_argument('--device', default='cuda:0')
     parser.add_argument("--verbose", dest="verbose", action="store_true", help="Print model architecture")
@@ -178,7 +195,7 @@ if __name__ == '__main__':
     image_in_dim = some_image.shape[1]
 
     # Init Model
-    model = network.LikeCategoryPredictor(in_dim=in_dim, image_in_dim=image_in_dim, out_classes=10).to(device=device)
+    model = network.LikeNumberPredictor(in_dim=in_dim, image_in_dim=image_in_dim, out_classes=1).to(device=device)
 
     print("Testing the Model -----------------------------------------------------------------------------------")
     # First Check if everything is compatible then:
@@ -191,7 +208,7 @@ if __name__ == '__main__':
 
 
     # Define loss and optimizer
-    criterion = CrossEntropyLoss()
+    criterion = MSELoss()
     optimizer = Adam(model.parameters(), lr=.001)
 
     # Training Loop
@@ -199,11 +216,14 @@ if __name__ == '__main__':
     avg_losses, epoch = train(args.num_epochs, train_loader, optimizer, criterion, model, test_loader=test_loader, device=device)
     print("Training Finished ---------------------------------------------------------------------------------------")
 
-    print("Accuracy on Some Data:")
+    print("Results on Some Data:\n")
     model.eval()
     some_output = model((some_data, some_image))
+    print("MSE: ", round(calculate_mse(some_output, some_label), 4))
+    print("RMSE: ", round(calculate_rmse(some_output, some_label), 4))
+    print("MAE: ", round(calculate_mae(some_output, some_label), 4))
+    print("R2: ", round(calculate_r2(some_output.float(), some_label.float()), 4))
 
-    print(calculate_accuracy(torch.argmax(some_output, dim=1), some_label)*100, '%')
     # Save model
     print("Saving the Model at: ", log_dir)
     save_model(model, optimizer,  epoch, log_dir, avg_losses)

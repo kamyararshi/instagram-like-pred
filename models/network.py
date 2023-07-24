@@ -2,11 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
+from torchvision.models.resnet import ResNet18_Weights
 
 
-class LikeCategoryPredictor(nn.Module):
+class LikeNumberPredictor(nn.Module):
     def __init__(self, in_dim, image_in_dim, out_classes, convolutional=False,
-                 resnet_weights=torchvision.models.resnet18(pretrained=True).state_dict()):
+                 resnet_weights=torchvision.models.resnet18(weights=ResNet18_Weights.DEFAULT).state_dict()):
         super().__init__()
 
         if convolutional:
@@ -55,7 +56,11 @@ class LikeCategoryPredictor(nn.Module):
             nn.Dropout(0.5),
             nn.Linear(128, 64),
             nn.Dropout(0.5),
-            nn.Linear(64, out_features=out_classes),
+            nn.Linear(64, 32),
+            nn.Dropout(0.5),
+            nn.Linear(32, 16),
+            nn.Dropout(0.5),
+            nn.Linear(16, out_features=out_classes),
         )
 
     def forward(self, x):
@@ -77,10 +82,10 @@ class ImageEmbedder(nn.Module):
     def __init__(self, in_dim, out_dim, weights=None):
         super().__init__()
         if weights is not None:
-            self.model = torchvision.models.resnet18(pretrained=False)
+            self.model = torchvision.models.resnet18(weights=None)
             self.model.load_state_dict(weights)
         else:
-            self.model = torchvision.models.resnet18()
+            self.model = torchvision.models.resnet18(weights=ResNet18_Weights.DEFAULT)
 
         # Freeze weights
         for parameter in self.model.parameters():

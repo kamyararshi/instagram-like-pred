@@ -15,8 +15,11 @@ class InstagramUserData(Dataset):
         self.dataframe_orig = pd.read_csv(data_path, sep=seperator).drop('Unnamed: 0', axis=1)
         self.device = device
         self.image_paths = self.dataframe_orig['path']
-        self.labels = self.dataframe_orig['numberLikesCategory']-1 # Make labels to be from 0-9
-        self.data = self.dataframe_orig.drop(['numberLikesCategory', 'descriptionProcessed', 'path'], axis=1) # We may use the descriptin to extract embeddigs latter
+        self.dataframe_orig['numberLikes'] = self.dataframe_orig['numberLikes'].fillna(self.dataframe_orig['numberLikes'].mean())
+        self.labels = self.dataframe_orig['numberLikes']
+
+        # Change Weekday to numerical later and use it as a feature
+        self.data = self.dataframe_orig.drop(['numberLikesCategory', 'descriptionProcessed', 'path', 'numberLikes', 'url', 'alias', 'weekday'], axis=1) # We may use the descriptin to extract embeddigs latter
         # Split train-test
         data_train, data_test, labels_train, labels_test = train_test_split(
             self.data, self.labels, test_size=.1, random_state=42
@@ -42,7 +45,7 @@ class InstagramUserData(Dataset):
         except Exception as e:
             print(e, "in", path)
             image = torch.tensor(999)
-        label = torch.tensor(labels, dtype=torch.long, device=self.device)
+        label = torch.tensor(labels, dtype=torch.float32, device=self.device)
         return data, image, label
     
     def __len__(self):
