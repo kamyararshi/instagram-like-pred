@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn import CrossEntropyLoss, MSELoss
 from torch.utils.data import DataLoader
-from torch.optim import Adam
+from torch.optim import Adam, lr_scheduler
 from torch.utils.tensorboard import SummaryWriter
 
 from argparse import ArgumentParser
@@ -65,7 +65,7 @@ def train_one_epoch(train_loader, optimizer, criterion, model, device):
     # Return Average Loss in Whole Batch
     return avg_loss
 
-def train(num_epochs, train_loader, optimizer, criterion, model, test_loader=None, device='cuda'):
+def train(num_epochs, train_loader, optimizer, criterion, scheduler, model, test_loader=None, device='cuda'):
     """
     
     """
@@ -98,6 +98,9 @@ def train(num_epochs, train_loader, optimizer, criterion, model, test_loader=Non
                 running_vloss += vloss
             print(Fore.GREEN + f"Average Validation Loss After Training = {vloss/i}\n")
             tb_writer.add_scalar('Loss/validation', vloss, int(epoch))
+
+        scheduler.step()
+    
 
     return avg_loss, epoch
 
@@ -211,9 +214,12 @@ if __name__ == '__main__':
     criterion = MSELoss()
     optimizer = Adam(model.parameters(), lr=.001)
 
+    # MultiTepLR
+    scheduler = lr_scheduler.MultiStepLR(optimizer, [15, 30])
+
     # Training Loop
     print("Training the Model --------------------------------------------------------------------------------------")
-    avg_losses, epoch = train(args.num_epochs, train_loader, optimizer, criterion, model, test_loader=test_loader, device=device)
+    avg_losses, epoch = train(args.num_epochs, train_loader, optimizer, criterion, scheduler, model, test_loader=test_loader, device=device)
     print("Training Finished ---------------------------------------------------------------------------------------")
 
     print("Results on Some Data:\n")
