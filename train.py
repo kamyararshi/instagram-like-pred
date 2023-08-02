@@ -10,7 +10,7 @@ from tqdm import tqdm, trange
 import os
 from time import gmtime, strftime
 
-
+import random
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import OneHotEncoder
@@ -22,6 +22,14 @@ from utils import *
 import colorama
 from colorama import Fore, Back, Style
 colorama.init(autoreset=True)
+
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+
 
 def train_one_epoch(train_loader, optimizer, criterion, model, device):
     """
@@ -45,7 +53,8 @@ def train_one_epoch(train_loader, optimizer, criterion, model, device):
         outputs = model((data, img))
 
         # Compute the loss and its gradients
-        loss = criterion(outputs, y.to(torch.long))
+        # loss = criterion(outputs, y.to(torch.long))
+        loss = criterion(outputs.view(-1), y.float())
         loss.backward()
 
         # Adjust learning weights
@@ -103,10 +112,27 @@ def train(num_epochs, train_loader, optimizer, criterion, model, epoch_number = 
 
 def calculate_accuracy(predicted_labels, true_labels):
     total_samples = len(true_labels)
-    correct_predictions = (predicted_labels == true_labels).sum().item()
+    # correct_predictions = (predicted_labels == true_labels).sum().item()
+    correct_predictions = (predicted_labels.round() == true_labels).sum().item()
     accuracy = correct_predictions / total_samples
     return accuracy
 
+
+def calculate_mse(predicted_values, true_values):
+    # Convert to tensor if they are numpy arrays
+    if isinstance(predicted_values, np.ndarray):
+        predicted_values = torch.from_numpy(predicted_values)
+    if isinstance(true_values, np.ndarray):
+        true_values = torch.from_numpy(true_values)
+
+    # Ensure both tensors are float type
+    predicted_values = predicted_values.float()
+    true_values = true_values.float()
+
+    mse_loss = nn.MSELoss()
+    mse = mse_loss(predicted_values, true_values)
+
+    return mse.item()
 
 
 def save_model(model, optimizer,  epoch, log_dir, loss):
@@ -131,6 +157,7 @@ def save_model(model, optimizer,  epoch, log_dir, loss):
 
 
 if __name__ == '__main__':
+    set_seed(1234)
     parser = ArgumentParser()
 
     parser.add_argument('--path', default="preprocessing/final_data_pictures_ready.csv")
@@ -191,7 +218,7 @@ if __name__ == '__main__':
 
 
     # Define loss and optimizer
-    criterion = CrossEntropyLoss()
+    criterion = nn.MSELoss()
     optimizer = Adam(model.parameters(), lr=.001)
 
     # Training Loop
@@ -203,7 +230,13 @@ if __name__ == '__main__':
     model.eval()
     some_output = model((some_data, some_image))
 
-    print(calculate_accuracy(torch.argmax(some_output, dim=1), some_label)*100, '%')
+    # print(calculate_accuracy(torch.argmax(some_output, dim=1), some_label)*100, '%')
+    print(calculate_accuracy(torch.round(some_output.view(-1)), some_label.float()) * 100, '%')
+    print("MSE on Some Data:",calculate_mse(torch.round(some_output.view(-1)), some_label.float()) )
+    print(torch.round(some_output.view(-1)))
+    print(some_label.float())
+    print(some_output.view(-1))
+
     # Save model
     print("Saving the Model at: ", log_dir)
     save_model(model, optimizer,  epoch, log_dir, avg_losses)

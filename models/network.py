@@ -55,7 +55,8 @@ class LikeCategoryPredictor(nn.Module):
             nn.Dropout(0.5),
             nn.Linear(128, 64),
             nn.Dropout(0.5),
-            nn.Linear(64, out_features=out_classes),
+            # nn.Linear(64, out_features=out_classes),
+            nn.Linear(64, 1),
         )
 
     def forward(self, x):
